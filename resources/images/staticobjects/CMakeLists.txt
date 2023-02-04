@@ -1,0 +1,5 @@
+﻿configure_file ("blank.png" ${CMAKE_BINARY_DIR} COPYONLY)
+configure_file ("key.png" ${CMAKE_BINARY_DIR} COPYONLY)
+configure_file ("wall.png" ${CMAKE_BINARY_DIR} COPYONLY)
+configure_file ("door.png" ${CMAKE_BINARY_DIR} COPYONLY)
+configure_file ("cookie.png" ${CMAKE_BINARY_DIR} COPYONLY)

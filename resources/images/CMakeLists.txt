@@ -1,0 +1,1 @@
+﻿configure_file ("cursor.png" ${CMAKE_BINARY_DIR} COPYONLY)
