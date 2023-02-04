@@ -1,0 +1,529 @@
+@startuml
+
+class Controller
+{
+  -void runMainMenu();
+	-void runGame();
+	-void runHelp();
+	-void lostGame();
+	-void winGame();
+	-void getReady(sf::RenderWindow& runWindow, GameBoard& m_board);
+	-void setMouseCursor(sf::RenderWindow& window);
+	-void nextLevel(const GameBoard& board);
+	-bool isGameLost(const GameBoard& board);\
+	-Display m_display;
+	-MainMenu m_mainMenu;
+	-sf::Clock m_time;
+	-GameState m_state;
+	-sf::Sound m_startMusic;
+	-sf::Sound m_siren1;
+	-sf::Sound m_intermission;
+	-sf::Sound m_win;
+	-sf::Sound m_lose;
+	-sf::Cursor m_cursor;
+	-int m_level = 1;
+	-int m_points = 0;
+	+Controller();
+	+void run();
+}
+
+enum GameState 
+{
+  PLAY,
+	HELP, 
+	EXIT, 
+	MENU,
+	LOST,
+	WIN
+}
+
+class MainMenu
+{
+  -sf::Sprite m_menuSprite;
+	-sf::Sprite m_helpSprite;
+	-sf::Sprite m_winSprite;
+	-sf::Sprite m_lostSprite;
+	-std::vector<MenuItem> m_menuItems;
+	-std::vector<MenuItem> m_menuItemsHighlighted;
+	-bool m_playh, m_helph, m_exith;
+	-sf::Sound m_select;
+	-void setOutsidePos();
+	+MainMenu();
+	+void handleMouseInput(sf::Vector2f mPosition, GameState& state);
+	+void handleMouseLocation(sf::Vector2f mPosition);
+	+void drawMenu(sf::RenderWindow& window);
+	+void drawHelp(sf::RenderWindow& window);
+	+void drawLost(sf::RenderWindow& window);
+	+void drawWin(sf::RenderWindow& window, const int points);
+}
+
+class MenuItem
+{
+  -sf::Sprite m_sprite;
+  +MenuItem(sf::Sprite sprite);
+	+sf::FloatRect getGlobalBounds();
+	+sf::Sprite& getSprite();
+	+void setPos(float x, float y);
+}
+
+class TextureManager
+{
+  -TextureManager();
+	-sf::Texture m_spriteSheet;
+	-std::vector<sf::Texture> m_pacman;
+	-std::vector < sf::Texture> m_blinky;
+	-std::vector < sf::Texture> m_pinky;
+	-std::vector < sf::Texture> m_inky;
+	-std::vector < sf::Texture> m_clyde;
+	-std::vector < sf::Texture> m_scaredGhost;
+	-sf::Texture m_superBonus;
+	-sf::Texture m_timeFreezeBonus;
+	-sf::Texture m_timeBonus;
+  and more...
+	-sf::Font m_font;
+	-void createTexturePacman();
+	-void createTextureBlinky();
+	-void createTexturePinky();
+	-void createTextureInky();
+	-void createTextureClyde();
+	-void createScaredGhost();
+	-void createStaticObjects();
+	-void createBonusObjects();
+	+static TextureManager& instance();
+	+\~TextureManager() = default;
+	+TextureManager(const TextureManager&) = delete;
+	+void operator=(const TextureManager&) = delete;
+	+const std::vector<sf::Texture>& getPacman() const;
+	+const std::vector < sf::Texture>& getBlinky() const;
+	+const std::vector < sf::Texture>& getPinky() const;
+	+const std::vector < sf::Texture>& getInky() const;
+	+const std::vector < sf::Texture>& getClyde() const;
+	+const std::vector < sf::Texture>& getScaredGhost() const;
+	+const sf::Texture& getSuperBonus() const;
+	+const sf::Texture& getTimeFreezeBonus() const;
+	+const sf::Texture& getTimeBonus() const;
+	+const sf::Texture& getLifeBonus() const;
+  and more...
+	+const sf::Font& getFont() const;
+}
+
+class SoundManager
+{
+  -SoundManager();
+	-sf::SoundBuffer m_startMusic;
+	-sf::SoundBuffer m_chomp;
+	-sf::SoundBuffer m_siren1;
+  and more...
+	-static SoundManager& instance();
+	+\~SoundManager() = default;
+	+SoundManager(const SoundManager&) = delete;
+	+void operator=(const SoundManager&) = delete;
+	+const sf::SoundBuffer& getStartMusic() const;
+	+const sf::SoundBuffer& getChomp() const;
+	+const sf::SoundBuffer& getSiren1() const;
+	+const sf::SoundBuffer& getPacmanDeath() const;
+  and more...
+}
+
+class GameBoard
+{
+   -float m_rows, m_cols;
+	-int m_level;
+	-int m_points;
+	-int m_cookies = 0;
+	-float m_levelTime;
+	-std::ifstream m_fin;
+	-GameObjectFactory m_gameObjFactory;
+	-std::vector<std::string> m_board;
+	-Ui m_ui;
+	-std::vector<std::unique_ptr<GameObject>> m_staticObjects;
+	-std::vector<std::unique_ptr<GameObject>> m_movingObjects;
+	-void openLevelFile();
+	-void checkCookieCollision(std::unique_ptr<GameObject>& obj, std::unique_ptr<GameObject>& otherObj);
+	-void resetGamePositions();
+	+GameBoard(const int level, const int points);
+	+bool loadLevel();
+	+void loadObjects();
+	+void draw(sf::RenderWindow& window);
+	+float getWidth() const;
+	+float getHeight() const;
+	+void setCharacterDirection(sf::Keyboard::Key key);
+	+void moveCharacters(sf::Time delta);
+	+void handleCollisions();
+	+int getCookieAmount() const;
+	+bool isPacmanDead();
+	+void isKeyDoorStatus();
+	+bool isPlayerLost() const;
+	+int getPoints() const;
+	+void updateUi();
+	+void addLostTime(float time);
+	+float getTimeLeft() const;
+	+void giveGhostPacmanPos();
+	+void setBonuses();
+}
+
+class Ui
+{
+  -std::vector<sf::Sprite> m_hpSprites;
+	-sf::Text m_level;
+	-sf::Text m_levelNm;
+	-sf::Text m_pointsNm;
+	-sf::Sprite m_timer;
+	-sf::Text m_timerNm;
+	-sf::Clock m_clock;
+	-float m_levelTime;
+	-float m_saveTime = 0.f; // Sum of all waiting times
+	-int m_hpNm = 3;
+	+Ui() = default;
+	+Ui(float height, int level, int points, float levelTime);
+	+void draw(sf::RenderWindow& window) const;
+	+void setHp(const int hp);
+	+void setLevel(const int hp);
+	+void setPoints(const int);
+	+void updateTime();
+	+void saveTime(float time);
+	+float getTimeLeft() const;
+	+void addTime();
+}
+
+enum Menu
+{
+    PLAY, HELP, EXIT, MENU
+}
+
+class GameState
+{
+    -Menu m_state;
+    +GameState();
+	+Menu getGameState();
+	+void setGameState(Menu state);
+}
+
+class Display
+{
+  +Display();
+	+sf::RenderWindow openMenuDisplay();
+	+sf::RenderWindow openHelpDisplay();
+	+sf::RenderWindow openGameDisplay(float width, float height);
+	+sf::RenderWindow openLostDisplay();
+	+sf::RenderWindow openWinDisplay();
+}
+
+class GameBoard
+{
+    -int m_level;
+	-std::string m_levelFile;
+	-std::ifstream m_fin;
+	-GameObjectFactory m_gameObjFactory;
+	-std::vector<std::string> m_board;
+	-std::vector<std::unique_ptr<GameObject>> m_staticObjects;
+	-std::vector<std::unique_ptr<GameObject>> m_movingObjects;
+	-Ui m_ui;
+	-float m_rows, m_cols;
+	-sf::Sound m_chomp;
+	-void openLevelFile();
+	-void loadObjects();
+    +GameBoard(TextureManager& txManager, SoundManager& soundManager);
+	+int getLevelNumber() const;
+	+bool loadLevel();
+	+void draw(sf::RenderWindow& window) const;
+	+float getWidth() const;
+	+float getHeight() const;
+	+void setCharacterDirection(sf::Keyboard::Key key);
+	+void moveCharacter(sf::Time delta);
+	+void handleCollisions();
+}
+
+class GameObjectFactory
+{
+  -int m_points;
+  +GameObjectFactory(const int points);
+	+std::unique_ptr<GameObject> createGameObject(char c, sf::Vector2f pos);
+}
+
+class GameObject
+{
+  -sf::Vector2f m_position;
+	-sf::Vector2f m_startPosition;
+	-std::vector<sf::Sprite> m_sprites;
+	-std::vector<sf::Sprite> m_scareghost;
+	-sf::Sprite m_sprite;
+	-std::vector<sf::Color> m_origColors;
+	-SpriteStatus m_spriteStatus = NORAML;
+	-void initSpritesnPositions(std::vector<sf::Sprite>& sprites, const std::vector<sf::Texture>& texture, sf::Vector2f pos);
+	#void setOriginalColor();
+	#void setSpritesColor(const sf::Color& color);
+	#SpriteStatus getSpriteStatus() const;
+	+GameObject(const sf::Texture& texture, sf::Vector2f pos);
+	+GameObject(const std::vector<sf::Texture>& texture, sf::Vector2f pos);
+	+virtual ~GameObject() = default;
+	+virtual void draw(sf::RenderWindow& window) = 0;
+	+virtual void handleCollision(GameObject& obj) = 0;
+  and more handle collisions...
+	+virtual sf::Sprite& getSprite() = 0;
+	+sf::Sprite& getMySprite();
+	+sf::Sprite& getMySprite(int direction);
+	+sf::Vector2f getPosition() const;
+	+sf::Vector2f getStartPosition() const;
+	+void setSpritesPositions(const sf::Vector2f& pos);
+	+void updateStayTexture(const Direction direction);
+	+void switchSprites();
+}
+
+class StaticObjects
+{
+  +StaticObjects(const sf::Texture& texture, sf::Vector2f pos);
+	+sf::Sprite& getSprite() override;
+}
+
+class MovingObjects
+{
+  -Direction m_direction;
+  +MovingObjects(const std::vector<sf::Texture>& texture, sf::Vector2f pos);
+	+virtual ~MovingObjects() = default;
+	+virtual void move(sf::Time delta) = 0;
+	+void setDirection(const Direction& direction);
+	+void setDirection(sf::Keyboard::Key key);
+	+Direction getDirection() const;
+	+sf::Sprite& getSprite() override;
+}
+
+class GameCharacter
+{
+  -int m_lives;
+  #void lifeDecrease();
+  +GameCharacter(const std::vector<sf::Texture>& texture, sf::Vector2f pos);
+	+virtual ~GameCharacter() = default;
+  +virtual void die() = 0;
+	+int getLivesAmount() const;
+	+void addLife();
+}
+
+class Pacman
+{
+  -int m_points;
+	-bool m_isBonusOn;
+	-float m_pacmanSpeed = 105.f;
+	-sf::Sound m_deathSound;
+	-sf::Sound m_chompSound;
+	-sf::Sound m_powerPelletSound;
+	-sf::Sound m_eatGhostSound;
+	-sf::Sound m_timeExtendSound;
+	-sf::Sound m_hpSound;
+	-sf::Sound m_freezeSound;
+	-sf::Clock m_time;
+	-PacmanState m_state;
+	-BonusState m_bonus;
+	-void moveBackwards(GameObject& staticObject);
+	-bool slideIntoPath(Direction direction, sf::Sprite& sprite, GameObject& staticObject);
+	-void updateStateColor();
+	+Pacman(const std::vector<sf::Texture>& texture, sf::Vector2f pos, const int points);
+	+void move(sf::Time delta) override;
+	+void draw(sf::RenderWindow& window) override;
+	+void handleCollision(GameObject&) override;
+	and more handle collisions...
+	+void die() override;
+	+PacmanState getState() const;
+	+BonusState getBonusState() const;
+	+int getPoints() const;
+	+void eatCookie();
+	+void setSuper();
+	+void unDie();
+	+void unsetBonus();
+	+void checkBonusTime();
+	+float getTimeElapsed() const;
+}
+
+enum BonusState
+{
+  Super,
+	Life,
+	Time,
+	TimeFreeze,
+	None
+}
+
+enum PacmanState
+{
+  Normal,
+	Super,
+	Dead
+}
+
+class Ghost
+{
+  -float m_ghostSpeed = 90.f;
+	-sf::Clock m_time;
+	-GhostState m_state;
+	-GhostState m_lastState = GhostState::PATROL;
+	-std::unique_ptr<Behavior> m_behavior;
+	-std::unique_ptr<Behavior> createBehavior();
+	-void moveBackwards(GameObject& staticObj);
+	-bool slideIntoPath(Direction direction, sf::Sprite& sprite, GameObject& staticObject);
+	+Ghost(const std::vector<sf::Texture>& texture, sf::Vector2f pos);
+	+void die() override;
+	+void draw(sf::RenderWindow& window) override;
+	+void move(sf::Time delta) override;
+	+void handleCollision(GameObject&) override;
+	and more handle collisions...
+	+void updatePositions(const sf::Vector2f& pacmanPos);
+	+void updateGhostState(const Pacman& pacman);
+	+void freeze();
+	+GhostState getState() const;
+}
+
+enum GhostState
+{
+  CHASE,
+	FRIGHTENED,
+	PATROL,
+	DEAD,
+	FROZEN
+}
+
+class Behavior
+{
+  -sf::Vector2f m_currentPos;
+	-sf::Vector2f m_pacmanPos;
+	-sf::Clock m_time;
+	#sf::Vector2f getCurrPos() const;
+	#sf::Time getTime();
+	#void resetClock();
+	+Behavior();
+	+virtual ~Behavior() = default;
+	+virtual void update() = 0;
+	+virtual Direction getDireciton() = 0;
+	+virtual void setDirection(const Direction& direction) = 0;
+	+void setPacmanPos(const sf::Vector2f& pacmanPos);
+	+void setCurrPos(const sf::Vector2f& currPos);
+	+sf::Vector2f getPacmanPos() const;
+}
+
+class PatrolBehavior
+{
+  -Direction m_currDirection;
+  +PatrolBehavior(const Direction& direction);
+	+void update() override;
+	+virtual Direction getDireciton() override;
+	+virtual void setDirection(const Direction& direction);
+}
+
+class ChaseBehavior
+{
+  -Direction m_currDirection;
+  +ChaseBehavior(const Direction& direction);
+	+void update() override;
+	+virtual Direction getDireciton() override;
+	+virtual void setDirection(const Direction& direction);
+}
+
+class FrightenedBehavior
+{
+  -Direction m_currDirection;
+  +FrightenedBehavior(const Direction& direction);
+	+void update() override;
+	+virtual Direction getDireciton() override;
+	+virtual void setDirection(const Direction& direction);
+}
+
+enum Direction
+{
+    -Up
+    -Down
+    -Right
+    -Left
+    -Stay
+    -Max
+}
+
+class Blank
+{
+   +Blank(const sf::Texture& texture, sf::Vector2f pos);
+	+void draw(sf::RenderWindow& window) override;
+	+void handleCollision(GameObject&) override;
+	+void handleCollision(Pacman&) override ;
+}
+
+class Wall
+{
+  +Wall(const sf::Texture& texture, sf::Vector2f pos);
+	+void draw(sf::RenderWindow& window) override;
+	+void handleCollision(GameObject&) override;
+	and more handle collisions...
+}
+
+class Cookie
+{
+  -bool m_show = true;
+  +Cookie(const sf::Texture& texture, sf::Vector2f pos);
+	+void draw(sf::RenderWindow& window) override;
+	+void handleCollision(GameObject&) override;
+	+void handleCollision(Pacman&) override;
+	+bool isAvail() const;
+	+void unShow();
+}
+
+class Door
+{
+  -sf::Sound m_doorBreak;
+	-bool m_show = true;
+	-int m_id;
+	+Door(const sf::Texture& texture, sf::Vector2f pos, int id);
+	+void draw(sf::RenderWindow& window) override;
+	+void handleCollision(GameObject&) override;
+	and more handle collisions...
+	+bool isAvail() const;
+	+void unshow();
+	+int getId() const;
+}
+
+class Key
+{
+  -sf::Sound m_doorOpen;
+	-bool m_show = true;
+	-int m_id;
+	+Key(const sf::Texture& texture, sf::Vector2f pos, int id);
+	+void draw(sf::RenderWindow& window) override;
+	+void handleCollision(GameObject& obj) override;
+	+void handleCollision(Pacman& pacman) override;
+	+bool isAvail() const;
+	+int getId() const;
+	+void unshow();
+}
+
+class Bonus
+{
+  -bool m_show = true;
+	-BonusType m_type;
+	#void unshow();
+	+Bonus(const sf::Texture& texture, sf::Vector2f pos, const BonusType& type);
+	+void handleCollision(GameObject&) override;
+	+void handleCollision(Pacman&) override;
+	+void draw(sf::RenderWindow& window) override;
+	+BonusType getType() const;
+}
+
+enum BonusType
+{
+  Super,
+	Life,
+	Time,
+	TimeFreeze,
+}
+
+GameObject <|-- StaticObjects
+GameObject <|-- MovingObjects
+MovingObjects <|-- GameCharacter
+GameCharacter <|-- Pacman
+GameCharacter <|-- Ghost
+Behavior <|-- PatrolBehavior
+Behavior <|-- ChaseBehavior
+Behavior <|-- FrightenedBehavior
+StaticObjects <|-- Blank
+StaticObjects <|-- Wall
+StaticObjects <|-- Cookie
+StaticObjects <|-- Bonus
+StaticObjects <|-- Key
+StaticObjects <|-- Door
+
+@enduml
